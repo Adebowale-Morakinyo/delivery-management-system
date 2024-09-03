@@ -42,4 +42,4 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual(calculate_payment(agent), 1050)  # 30 * 35
 
         agent.total_orders = 60
-        self.assertEqual(calculate_payment(agent), 2)
+        self.assertEqual(calculate_payment(agent), 2520)
