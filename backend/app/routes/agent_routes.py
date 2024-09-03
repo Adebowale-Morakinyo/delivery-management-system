@@ -1,7 +1,7 @@
 import falcon
 import json
-from backend.app.models.agent import Agent
-from backend.app.models.warehouse import Warehouse
+from app.models.agent import Agent
+from app.models.warehouse import Warehouse
 
 
 class AgentResource:

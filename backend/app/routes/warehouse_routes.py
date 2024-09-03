@@ -1,6 +1,6 @@
 import falcon
 import json
-from backend.app.models.warehouse import Warehouse
+from app.models.warehouse import Warehouse
 
 
 class WarehouseResource:

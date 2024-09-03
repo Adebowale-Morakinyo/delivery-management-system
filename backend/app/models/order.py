@@ -1,7 +1,7 @@
 from peewee import *
-from backend.app.database import BaseModel
-from backend.app.models.warehouse import Warehouse
-from backend.app.models.agent import Agent
+from app.database import BaseModel
+from app.models.warehouse import Warehouse
+from app.models.agent import Agent
 
 
 class Order(BaseModel):

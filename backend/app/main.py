@@ -1,7 +1,7 @@
 import falcon
-from backend.app.routes.warehouse_routes import warehouse_resource
-from backend.app.routes.agent_routes import agent_resource
-from backend.app.routes.order_routes import order_resource
+from app.routes.warehouse_routes import warehouse_resource
+from app.routes.agent_routes import agent_resource
+from app.routes.order_routes import order_resource
 
 app = falcon.App()
 

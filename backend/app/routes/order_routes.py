@@ -1,7 +1,7 @@
 import falcon
 import json
-from backend.app.models.order import Order
-from backend.app.models.warehouse import Warehouse
+from app.models.order import Order
+from app.models.warehouse import Warehouse
 
 
 class OrderResource:

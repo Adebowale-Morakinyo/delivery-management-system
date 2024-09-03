@@ -1,8 +1,8 @@
 import unittest
-from backend.app.services.allocation_service import haversine_distance, allocate_orders, calculate_payment
-from backend.app.models.warehouse import Warehouse
-from backend.app.models.agent import Agent
-from backend.app.models.order import Order
+from app.services.allocation_service import haversine_distance, allocate_orders, calculate_payment
+from app.models.warehouse import Warehouse
+from app.models.agent import Agent
+from app.models.order import Order
 from peewee import SqliteDatabase
 
 

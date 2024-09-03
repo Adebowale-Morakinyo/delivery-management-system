@@ -1,6 +1,6 @@
 from peewee import *
-from backend.app.database import BaseModel
-from backend.app.models.warehouse import Warehouse
+from app.database import BaseModel
+from app.models.warehouse import Warehouse
 
 
 class Agent(BaseModel):

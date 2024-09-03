@@ -1,6 +1,6 @@
-from backend.app.models.agent import Agent
-from backend.app.models.order import Order
-from backend.app.models.warehouse import Warehouse
+from app.models.agent import Agent
+from app.models.order import Order
+from app.models.warehouse import Warehouse
 from datetime import date, timedelta
 import math
 
