@@ -10,3 +10,6 @@ class Agent(BaseModel):
     total_orders = IntegerField(default=0)
     total_distance = DecimalField(max_digits=10, decimal_places=2, default=0)
     total_time = DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    class Meta:
+        table_name = 'agents'
