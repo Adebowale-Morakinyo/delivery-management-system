@@ -20,7 +20,8 @@ This project is a Delivery Management System (DMS) that allocates delivery order
 
 1. Clone the repository:
    
-   git clone https://github.com/yourusername/delivery-management-system.git
+   git clone https://github.com/Adebowale-Morakinyo/delivery-management-system.git
+   
    cd delivery-management-system
    
 
