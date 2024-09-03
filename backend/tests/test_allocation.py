@@ -5,6 +5,7 @@ from backend.app.models.agent import Agent
 from backend.app.models.order import Order
 from peewee import SqliteDatabase
 
+
 class TestAllocation(unittest.TestCase):
     def setUp(self):
         # Use an in-memory SQLite database for testing
