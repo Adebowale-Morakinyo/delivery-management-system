@@ -1,58 +1,79 @@
-# delivery-management-system
+# Delivery Management System
 
+This project is a Delivery Management System (DMS) that allocates delivery orders to agents while optimizing for efficiency and meeting certain compliances.
 
+## Technologies Used
 
+- Backend: Python with Falcon framework
+- Frontend: Vue.js
+- Database: PostgreSQL
+- Deployment: Docker and Docker Compose
 
+## Setup Instructions
 
+### Prerequisites
 
+- Docker and Docker Compose installed on your system
+- Git
 
+### Local Development
 
-## **Local PostgreSQL Database Setup**
+1. Clone the repository:
+   
+   git clone https://github.com/yourusername/delivery-management-system.git
+   cd delivery-management-system
+   
 
-### **1. Database Schema Creation**
-For the development and testing phase, I set up a PostgreSQL database locally. This was done to ensure smooth development and testing without relying on external hosting services, which may have downtime. The following schema was used to create the necessary tables:
+2. Create a `.env` file in the root directory with the following content:
+   
+   DATABASE_URL=postgresql://user:password@db:5432/delivery_management_system
+   
 
-```sql
--- Create the warehouses table
-CREATE TABLE warehouses (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    latitude DECIMAL(10, 8) NOT NULL,
-    longitude DECIMAL(11, 8) NOT NULL
-);
+3. Build and run the Docker containers:
+   
+   docker-compose up --build
+   
 
--- Create the agents table
-CREATE TABLE agents (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    warehouse_id INTEGER REFERENCES warehouses(id),
-    check_in_time TIMESTAMP,
-    total_orders INTEGER DEFAULT 0,
-    total_distance DECIMAL(10, 2) DEFAULT 0,
-    total_time DECIMAL(10, 2) DEFAULT 0
-);
+4. Access the application:
+   - Frontend: http://localhost
+   - Backend API: http://localhost:8000
 
--- Create the orders table
-CREATE TABLE orders (
-    id SERIAL PRIMARY KEY,
-    warehouse_id INTEGER REFERENCES warehouses(id),
-    delivery_address VARCHAR(255) NOT NULL,
-    latitude DECIMAL(10, 8) NOT NULL,
-    longitude DECIMAL(11, 8) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending',
-    agent_id INTEGER REFERENCES agents(id),
-    allocated_date DATE,
-    completed_time TIMESTAMP
-);
-```
+## API Documentation
 
-### **2. Local PostgreSQL Database Connection Using Peewee**
+### Warehouses
 
-For connecting the local PostgreSQL database to the backend, I used Peewee, a small and expressive ORM. The connection details are specified in the `backend/app/database.py` file, which ensures that the application interacts with the database seamlessly during development and testing.
+- GET /warehouses: Retrieve all warehouses
+- POST /warehouses: Create a new warehouse
 
-### **3. Reason for Local Development and Testing**
+### Agents
 
-The choice to use a local PostgreSQL instance, alongside Peewee for ORM, was made for the following reasons:
+- GET /agents: Retrieve all agents
+- POST /agents: Create a new agent
+- POST /agents/{agent_id}/check-in: Check-in an agent
 
-- **Development & Testing:** By hosting the database locally, I can ensure that development and testing processes are not disrupted by potential downtime of third-party hosting services.
-- **Fallback Plan:** While the project will eventually be hosted, using a local database allows me to proceed with development without delays. In case the hosting service (e.g., Railway) is not available before the production deadline, this setup ensures that I have a fully functional application ready for deployment.
+### Orders
+
+- GET /orders: Retrieve all orders
+- POST /orders: Create a new order
+
+## Frontend Usage Guide
+
+The frontend displays a simple dashboard showing key metrics:
+- Total Orders
+- Allocated Orders
+- Pending Orders
+- Active Agents
+- Average Orders per Agent (derived metric)
+
+## Deployment
+
+To deploy the application:
+
+1. Ensure you have Docker and Docker Compose installed on your server.
+2. Clone the repository on your server.
+3. Create a `.env` file with the appropriate database credentials.
+4. Run `docker-compose up -d` to start the application in detached mode.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE.md file for details.
