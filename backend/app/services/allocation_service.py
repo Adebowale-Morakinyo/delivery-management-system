@@ -4,6 +4,9 @@ from app.models.warehouse import Warehouse
 from datetime import date, timedelta
 import math
 from decimal import Decimal
+import heapq
+from sklearn.cluster import KMeans
+import numpy as np
 
 
 def haversine_distance(lat1, lon1, lat2, lon2):
@@ -20,31 +23,52 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     return R * c
 
 
+def cluster_orders(orders, num_agents):
+    coordinates = np.array([(order.latitude, order.longitude) for order in orders])
+    kmeans = KMeans(n_clusters=num_agents)
+    kmeans.fit(coordinates)
+
+    clusters = [[] for _ in range(num_agents)]
+    for idx, order in enumerate(orders):
+        cluster_id = kmeans.labels_[idx]
+        clusters[cluster_id].append(order)
+
+    return clusters
+
+
 def allocate_orders():
     today = date.today()
     warehouses = Warehouse.select()
 
     for warehouse in warehouses:
-        agents = Agent.select().where(Agent.warehouse == warehouse, Agent.check_in_time.is_null(False))
-        orders = Order.select().where(Order.warehouse == warehouse, Order.status == 'pending')
+        agents = list(Agent.select().where(Agent.warehouse == warehouse, Agent.check_in_time.is_null(False)))
+        orders = list(Order.select().where(Order.warehouse == warehouse, Order.status == 'pending'))
 
-        # Sort orders by distance from the warehouse
-        orders = sorted(orders, key=lambda o: haversine_distance(
-            warehouse.latitude, warehouse.longitude, o.latitude, o.longitude
-        ))
+        # Cluster orders to optimize routes and minimize travel distances
+        order_clusters = cluster_orders(orders, len(agents))
 
+        # Initialize a priority queue (min-heap) for agent assignment based on their available time/distance
+        agent_heap = []
         for agent in agents:
-            agent_orders = []
-            total_distance = Decimal(0)
-            total_time = Decimal(0)
+            heapq.heappush(agent_heap, (0, 0, agent))  # (total_distance, total_time, agent)
 
-            for order in orders:
-                if len(agent_orders) == 0:
+        for cluster in order_clusters:
+            # Sort each cluster by proximity to the warehouse
+            cluster.sort(key=lambda o: haversine_distance(
+                warehouse.latitude, warehouse.longitude, o.latitude, o.longitude
+            ))
+
+            for order in cluster:
+                # Get the agent with the least distance/time usage
+                total_distance, total_time, agent = heapq.heappop(agent_heap)
+
+                # Calculate the distance from the last order (or warehouse if no orders yet)
+                if agent.total_orders == 0:
                     distance = Decimal(haversine_distance(
                         warehouse.latitude, warehouse.longitude, order.latitude, order.longitude
                     ))
                 else:
-                    last_order = agent_orders[-1]
+                    last_order = Order.select().where(Order.agent == agent).order_by(Order.allocated_date.desc()).get()
                     distance = Decimal(haversine_distance(
                         last_order.latitude, last_order.longitude, order.latitude, order.longitude
                     ))
@@ -53,30 +77,31 @@ def allocate_orders():
 
                 # Check compliance: 100km max distance, 10 hours max time
                 if total_distance + distance <= Decimal(100) and total_time + time <= Decimal(10):
-                    agent_orders.append(order)
+                    # Assign the order to the agent
+                    order.agent = agent
+                    order.status = 'allocated'
+                    order.allocated_date = today
+                    order.save()
+
+                    # Update agent metrics
+                    agent.total_orders += 1
                     total_distance += distance
                     total_time += time
+                    agent.total_distance += total_distance
+                    agent.total_time += total_time
+                    agent.save()
+
+                    # Push the agent back into the heap with updated values
+                    heapq.heappush(agent_heap, (total_distance, total_time, agent))
+
                 else:
-                    break
-
-            # Assign the orders to the agent and update the database
-            for order in agent_orders:
-                order.agent = agent
-                order.status = 'allocated'
-                order.allocated_date = today
-                order.save()
-
-            # Update agent's total orders, total distance, and total time
-            agent.total_orders += len(agent_orders)
-            agent.total_distance += total_distance
-            agent.total_time += total_time
-            agent.save()
-
-            # Remove allocated orders from the list of pending orders
-            orders = [o for o in orders if o not in agent_orders]
+                    # Push back the agent into the heap (without assigning the order)
+                    heapq.heappush(agent_heap, (total_distance, total_time, agent))
+                    break  # This cluster has reached the max capacity for the agent
 
         # Postpone unallocated orders to the next day
-        for order in orders:
+        unallocated_orders = [order for cluster in order_clusters for order in cluster if order.status == 'pending']
+        for order in unallocated_orders:
             order.allocated_date = today + timedelta(days=1)
             order.save()
 
