@@ -25,12 +25,12 @@ app = falcon.App()
 
 logger.info("Starting the application")
 
-app.add_route('/warehouses', warehouse_resource)
-app.add_route('/agents', agent_resource)
-app.add_route('/orders', order_resource)
-
 if __name__ == "__main__":
     create_tables()
+
+    app.add_route('/warehouses', warehouse_resource)
+    app.add_route('/agents', agent_resource)
+    app.add_route('/orders', order_resource)
 
 """
 if __name__ == '__main__':
