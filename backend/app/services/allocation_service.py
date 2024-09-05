@@ -3,7 +3,6 @@ from app.models.order import Order
 from app.models.warehouse import Warehouse
 from datetime import date, timedelta
 import math
-from decimal import Decimal
 
 
 def haversine_distance(lat1, lon1, lat2, lon2):
@@ -28,14 +27,15 @@ def allocate_orders():
         agents = Agent.select().where(Agent.warehouse == warehouse, Agent.check_in_time.is_null(False))
         orders = Order.select().where(Order.warehouse == warehouse, Order.status == 'pending')
 
+        # Sort orders by distance from warehouse
         orders = sorted(orders, key=lambda o: haversine_distance(
             warehouse.latitude, warehouse.longitude, o.latitude, o.longitude
         ))
 
         for agent in agents:
             agent_orders = []
-            total_distance = Decimal(0)
-            total_time = Decimal(0)  # Use Decimal for total_time
+            total_distance = 0
+            total_time = 0
 
             for order in orders:
                 if len(agent_orders) == 0:
@@ -48,15 +48,16 @@ def allocate_orders():
                         last_order.latitude, last_order.longitude, order.latitude, order.longitude
                     )
 
-                time = Decimal(distance * 5 / 60)  # Convert time to Decimal
+                time = distance * 5 / 60  # 5 minutes per km
 
-                if total_distance + distance <= Decimal(100) and total_time + time <= Decimal(10):
+                if total_distance + distance <= 100 and total_time + time <= 10:
                     agent_orders.append(order)
-                    total_distance += Decimal(distance)
+                    total_distance += distance
                     total_time += time
                 else:
                     break
 
+            # Update orders and agent
             for order in agent_orders:
                 order.agent = agent
                 order.status = 'allocated'
@@ -64,12 +65,14 @@ def allocate_orders():
                 order.save()
 
             agent.total_orders += len(agent_orders)
-            agent.total_distance += Decimal(total_distance)
+            agent.total_distance += float(total_distance)
             agent.total_time += total_time
             agent.save()
 
+            # Remove allocated orders from the list
             orders = [o for o in orders if o not in agent_orders]
 
+        # Postpone remaining orders
         for order in orders:
             order.allocated_date = today + timedelta(days=1)
             order.save()
@@ -90,3 +93,4 @@ def run_allocation():
     now = datetime.now()
     if now.hour == 8 and now.minute == 0:
         allocate_orders()
+        
