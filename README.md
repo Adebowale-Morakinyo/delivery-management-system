@@ -164,6 +164,11 @@ The frontend displays a simple dashboard showing key metrics:
 - Active Agents
 - Average Orders per Agent (derived metric)
 
+## Screenshots
+
+Working on screenshot and gifs. Loading ...
+- ![Metrics Dashboard](https://github.com/Adebowale-Morakinyo/delivery-management-system/blob/main/images/Screenshot_2024-09-05_15-12-39.png "Delivery Management System")
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE.md file for details.
