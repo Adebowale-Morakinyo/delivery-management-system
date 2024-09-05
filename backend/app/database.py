@@ -5,17 +5,12 @@ from app.models.agent import Agent
 from app.models.order import Order
 
 db = PostgresqlDatabase(
-    os.getenv('PGDATABASE', 'delivery_management_system'),  # default to your dev DB
+    os.getenv('PGDATABASE', 'delivery_management_system'),
     user=os.getenv('PGUSER', 'postgres'),
     password=os.getenv('PGPASSWORD', 'postgres'),
-    host=os.getenv('PGHOST', 'localhost'),  # Change to 'localhost' for dev, use env for prod
+    host=os.getenv('PGHOST', 'localhost'),
     port=int(os.getenv('PGPORT', 5432))
 )
-
-
-class BaseModel(Model):
-    class Meta:
-        database = db
 
 
 def create_tables():

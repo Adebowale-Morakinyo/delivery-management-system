@@ -1,5 +1,5 @@
 from peewee import *
-from app.database import BaseModel
+from app.models.base import BaseModel
 from app.models.warehouse import Warehouse
 
 
