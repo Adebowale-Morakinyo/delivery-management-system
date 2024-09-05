@@ -20,6 +20,28 @@ This Delivery Management System is a web application designed to allocate delive
 - State Management: Vuex
 - Testing: Python unittest, Jest, Vue Test Utils
 - Containerization: Docker
+- **New Libraries**: 
+  - `scikit-learn`: For clustering orders using K-Means
+  - `numpy`: For efficient numerical operations
+  - `heapq`: For optimized agent selection using a priority queue
+
+## Logic Explanation
+
+### Order Allocation Optimization
+
+In the optimized allocation logic, the system efficiently assigns orders to agents by using clustering and priority-based queues:
+
+1. **Clustering Orders**: Orders are clustered using the K-Means algorithm, grouping them by geographical proximity. This reduces the travel distance for agents and ensures orders are batched by location.
+   
+2. **Priority Queue for Agents**: A priority queue (min-heap) is used to dynamically assign orders to agents based on their remaining time and distance capacity. The agent with the least used resources is always selected first.
+
+3. **Distance Calculation**: The `haversine_distance` function is used to calculate the great-circle distance between two geographical points. This is crucial for determining the proximity of orders to agents and for ensuring compliance with the system's distance and time limits.
+
+### Benefits of the Optimization
+
+- **Reduced Complexity**: The original nested loops were replaced with more efficient algorithms, reducing unnecessary iterations.
+- **Dynamic Assignment**: The use of a priority queue ensures that agents are always assigned orders in a way that maximizes efficiency and minimizes idle time.
+- **Scalability**: By clustering orders and optimizing agent selection, the system scales better with larger datasets of agents and orders.
 
 ## Project Structure
 
