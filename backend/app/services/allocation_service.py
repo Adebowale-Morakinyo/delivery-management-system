@@ -64,7 +64,7 @@ def allocate_orders():
                 order.save()
 
             agent.total_orders += len(agent_orders)
-            agent.total_distance += total_distance
+            agent.total_distance += Decimal(total_distance)
             agent.total_time += total_time
             agent.save()
 
