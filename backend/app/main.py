@@ -17,8 +17,10 @@ app.add_route('/warehouses', warehouse_resource)
 app.add_route('/agents', agent_resource)
 app.add_route('/orders', order_resource)
 
+"""
 if __name__ == '__main__':
     from wsgiref import simple_server
     logger.info("Serving on 0.0.0.0:8000")
     httpd = simple_server.make_server('0.0.0.0', 8000, app)
     httpd.serve_forever()
+"""
