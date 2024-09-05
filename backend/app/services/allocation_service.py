@@ -1,3 +1,4 @@
+import logging
 from app.models.agent import Agent
 from app.models.order import Order
 from app.models.warehouse import Warehouse
@@ -8,10 +9,12 @@ import heapq
 from sklearn.cluster import KMeans
 import numpy as np
 
+# Create a logger instance
+logger = logging.getLogger(__name__)
+
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     R = 6371  # Earth's radius in kilometers
-
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
 
     dlat = lat2 - lat1
@@ -24,6 +27,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 
 def cluster_orders(orders, num_agents):
+    logger.info(f"Clustering {len(orders)} orders for {num_agents} agents")
     coordinates = np.array([(order.latitude, order.longitude) for order in orders])
     kmeans = KMeans(n_clusters=num_agents)
     kmeans.fit(coordinates)
@@ -33,36 +37,39 @@ def cluster_orders(orders, num_agents):
         cluster_id = kmeans.labels_[idx]
         clusters[cluster_id].append(order)
 
+    logger.info(f"Orders clustered into {len(clusters)} groups")
     return clusters
 
 
 def allocate_orders():
     today = date.today()
+    logger.info("Starting order allocation process")
     warehouses = Warehouse.select()
 
     for warehouse in warehouses:
+        logger.info(f"Processing warehouse: {warehouse.id} - {warehouse.name}")
+
         agents = list(Agent.select().where(Agent.warehouse == warehouse, Agent.check_in_time.is_null(False)))
         orders = list(Order.select().where(Order.warehouse == warehouse, Order.status == 'pending'))
 
-        # Cluster orders to optimize routes and minimize travel distances
+        logger.info(f"Found {len(agents)} available agents and {len(orders)} pending orders")
+
+        # Cluster orders to optimize routes
         order_clusters = cluster_orders(orders, len(agents))
 
-        # Initialize a priority queue (min-heap) for agent assignment based on their available time/distance
+        # Initialize a priority queue (min-heap) for agent assignment
         agent_heap = []
         for agent in agents:
             heapq.heappush(agent_heap, (0, 0, agent))  # (total_distance, total_time, agent)
 
         for cluster in order_clusters:
-            # Sort each cluster by proximity to the warehouse
             cluster.sort(key=lambda o: haversine_distance(
                 warehouse.latitude, warehouse.longitude, o.latitude, o.longitude
             ))
 
             for order in cluster:
-                # Get the agent with the least distance/time usage
                 total_distance, total_time, agent = heapq.heappop(agent_heap)
 
-                # Calculate the distance from the last order (or warehouse if no orders yet)
                 if agent.total_orders == 0:
                     distance = Decimal(haversine_distance(
                         warehouse.latitude, warehouse.longitude, order.latitude, order.longitude
@@ -75,8 +82,8 @@ def allocate_orders():
 
                 time = Decimal(distance * 5 / 60)
 
-                # Check compliance: 100km max distance, 10 hours max time
                 if total_distance + distance <= Decimal(100) and total_time + time <= Decimal(10):
+                    logger.info(f"Allocating order {order.id} to agent {agent.id}")
                     # Assign the order to the agent
                     order.agent = agent
                     order.status = 'allocated'
@@ -93,20 +100,23 @@ def allocate_orders():
 
                     # Push the agent back into the heap with updated values
                     heapq.heappush(agent_heap, (total_distance, total_time, agent))
-
                 else:
-                    # Push back the agent into the heap (without assigning the order)
+                    logger.warning(f"Agent {agent.id} reached max capacity for distance/time")
                     heapq.heappush(agent_heap, (total_distance, total_time, agent))
-                    break  # This cluster has reached the max capacity for the agent
+                    break
 
-        # Postpone unallocated orders to the next day
+        # Postpone unallocated orders
         unallocated_orders = [order for cluster in order_clusters for order in cluster if order.status == 'pending']
         for order in unallocated_orders:
+            logger.info(f"Postponing unallocated order {order.id} to next day")
             order.allocated_date = today + timedelta(days=1)
             order.save()
 
+    logger.info("Order allocation process completed")
+
 
 def calculate_payment(agent):
+    logger.info(f"Calculating payment for agent {agent.id}")
     if agent.total_orders >= 50:
         return max(500, agent.total_orders * 42)
     elif agent.total_orders >= 25:
@@ -115,9 +125,10 @@ def calculate_payment(agent):
         return 500
 
 
-# Run allocation at a specific time (e.g., 8 AM)
+# Run allocation at a specific time
 def run_allocation():
     from datetime import datetime
     now = datetime.now()
     if now.hour == 8 and now.minute == 0:
+        logger.info("Running order allocation at 8 AM")
         allocate_orders()
