@@ -28,6 +28,7 @@ def allocate_orders():
         agents = Agent.select().where(Agent.warehouse == warehouse, Agent.check_in_time.is_null(False))
         orders = Order.select().where(Order.warehouse == warehouse, Order.status == 'pending')
 
+        # Sort orders by distance from the warehouse
         orders = sorted(orders, key=lambda o: haversine_distance(
             warehouse.latitude, warehouse.longitude, o.latitude, o.longitude
         ))
@@ -48,8 +49,9 @@ def allocate_orders():
                         last_order.latitude, last_order.longitude, order.latitude, order.longitude
                     ))
 
-                time = Decimal(distance * 5 / 60)  # Convert time to Decimal
+                time = Decimal(distance * 5 / 60)
 
+                # Check compliance: 100km max distance, 10 hours max time
                 if total_distance + distance <= Decimal(100) and total_time + time <= Decimal(10):
                     agent_orders.append(order)
                     total_distance += distance
@@ -57,19 +59,23 @@ def allocate_orders():
                 else:
                     break
 
+            # Assign the orders to the agent and update the database
             for order in agent_orders:
                 order.agent = agent
                 order.status = 'allocated'
                 order.allocated_date = today
                 order.save()
 
+            # Update agent's total orders, total distance, and total time
             agent.total_orders += len(agent_orders)
             agent.total_distance += total_distance
             agent.total_time += total_time
             agent.save()
 
+            # Remove allocated orders from the list of pending orders
             orders = [o for o in orders if o not in agent_orders]
 
+        # Postpone unallocated orders to the next day
         for order in orders:
             order.allocated_date = today + timedelta(days=1)
             order.save()

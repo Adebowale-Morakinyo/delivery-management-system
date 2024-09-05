@@ -24,17 +24,26 @@ class TestAllocation(unittest.TestCase):
         self.assertAlmostEqual(distance, 157.2, places=1)
 
     def test_allocate_orders(self):
-        # Create test data
+        # Create test warehouse and agent
         warehouse = Warehouse.create(name='Test Warehouse', latitude=0, longitude=0)
         agent = Agent.create(name='Test Agent', warehouse=warehouse, check_in_time='2023-01-01 08:00:00')
-        Order.create(warehouse=warehouse, delivery_address='Test Address', latitude=0.1, longitude=0.1)
-        Order.create(warehouse=warehouse, delivery_address='Test Address 2', latitude=0.2, longitude=0.2)
+
+        # Create orders
+        Order.create(warehouse=warehouse, delivery_address='Test Address 1', latitude=0.1, longitude=0.1,
+                     status='pending')
+        Order.create(warehouse=warehouse, delivery_address='Test Address 2', latitude=0.2, longitude=0.2,
+                     status='pending')
 
         # Run allocation
         allocate_orders()
 
-        # Check results
+        # Check if orders were allocated
         self.assertEqual(Order.select().where(Order.status == 'allocated').count(), 2)
+
+        # Reload agent from the database to get updated total_orders
+        agent = Agent.get(Agent.id == agent.id)
+
+        # Check if the agent was assigned the correct number of orders
         self.assertEqual(agent.total_orders, 2)
 
     def test_calculate_payment(self):
