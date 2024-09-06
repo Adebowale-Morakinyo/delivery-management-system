@@ -1,19 +1,19 @@
 <template>
     <div class="metrics-dashboard">
       <h2>Metrics Dashboard</h2>
-      
+  
       <!-- Show loading state while data is being fetched -->
       <div v-if="loading" class="loading-message">
         <p>Loading metrics...</p>
       </div>
-
+  
+      <!-- Show error message if there was an error fetching data -->
       <div v-if="error" class="error-message">
         <p>Error loading metrics. Please try again later.</p>
       </div>
-
-      
+  
       <!-- Show metrics after data has been loaded -->
-      <div v-else class="metrics">
+      <div v-else-if="!loading" class="metrics">
         <div class="metric" v-for="(value, key) in metrics" :key="key">
           <h3>{{ formatMetricTitle(key) }}</h3>
           <p>{{ value }}</p>
@@ -40,7 +40,7 @@
           activeAgents: 0
         },
         loading: true, // Add loading state
-        error: false,
+        error: false,  // Add error state
       }
     },
     computed: {
@@ -56,29 +56,32 @@
     methods: {
       async fetchMetrics() {
         try {
-            const [ordersResponse, agentsResponse] = await Promise.all([
+          // Increase timeout to 120 seconds for API calls
+          const [ordersResponse, agentsResponse] = await Promise.all([
             api.get('/orders'),
             api.get('/agents')
-            ])
-
-            console.log('Orders Response:', ordersResponse.data)
-            console.log('Agents Response:', agentsResponse.data)
-
-            const orders = ordersResponse.data
-            const agents = agentsResponse.data
-
-            this.metrics = {
+          ])
+  
+          // Log the API responses for debugging purposes
+          console.log('Orders Response:', ordersResponse.data)
+          console.log('Agents Response:', agentsResponse.data)
+  
+          // Extract and filter data from API responses
+          const orders = ordersResponse.data
+          const agents = agentsResponse.data
+  
+          this.metrics = {
             totalOrders: orders.length,
             allocatedOrders: orders.filter(o => o.status === 'allocated').length,
             pendingOrders: orders.filter(o => o.status === 'pending').length,
             activeAgents: agents.filter(a => a.check_in_time).length
-            }
-
+          }
+  
         } catch (error) {
-            console.error('Error fetching metrics:', error)
-            this.error = true
+          console.error('Error fetching metrics:', error)
+          this.error = true // Set error state if there is an issue
         } finally {
-            this.loading = false
+          this.loading = false // Ensure loading is false after fetching is done
         }
       },
       formatMetricTitle(key) {
@@ -130,14 +133,15 @@
     color: #007bff;
   }
   
-  .loading-message {
+  .loading-message,
+  .error-message {
     text-align: center;
     font-size: 1.5em;
     color: #333;
   }
+  
   .error-message {
-  color: red;
-  text-align: center;
+    color: red;
   }
   </style>
   
