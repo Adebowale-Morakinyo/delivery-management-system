@@ -1,4 +1,5 @@
 import falcon
+from falcon_cors import CORS
 import logging
 from app.routes.warehouse_routes import warehouse_resource
 from app.routes.agent_routes import agent_resource
@@ -15,6 +16,10 @@ from config import setup_logging
 setup_logging()
 logger = logging.getLogger(__name__)
 
+# Enable CORS
+cors = CORS(allow_all_origins=True, allow_all_methods=True, allow_all_headers=True)
+app = falcon.App(middleware=[cors.middleware])
+
 
 # Create tables if they don't exist
 def create_tables():
@@ -22,11 +27,10 @@ def create_tables():
         db.create_tables([Warehouse, Agent, Order])
 
 
-app = falcon.App()
+# app = falcon.App()
 
 logger.info("Starting the application")
 # create_tables()
-
 # populate_sample_data()
 
 app.add_route('/warehouses', warehouse_resource)
