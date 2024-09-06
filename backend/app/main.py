@@ -5,7 +5,7 @@ from app.routes.warehouse_routes import warehouse_resource
 from app.routes.agent_routes import agent_resource
 from app.routes.order_routes import order_resource
 from app.routes.allocation_routes import allocation_resource
-from app.routes.allocation_routes import metrics_resource
+from app.routes.metrics_routes import metrics_resource
 
 from app.database import db
 from app.populate_db import populate_sample_data
