@@ -1,0 +1,5 @@
+{
+    "env": {
+      "VUE_APP_API_URL": "https://delivery-management-system-production.up.railway.app"
+    }
+  }
