@@ -25,9 +25,9 @@ def create_tables():
 app = falcon.App()
 
 logger.info("Starting the application")
-create_tables()
+# create_tables()
 
-populate_sample_data()
+# populate_sample_data()
 
 app.add_route('/warehouses', warehouse_resource)
 app.add_route('/agents', agent_resource)
