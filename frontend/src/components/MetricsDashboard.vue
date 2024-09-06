@@ -6,6 +6,11 @@
       <div v-if="loading" class="loading-message">
         <p>Loading metrics...</p>
       </div>
+
+      <div v-if="error" class="error-message">
+        <p>Error loading metrics. Please try again later.</p>
+      </div>
+
       
       <!-- Show metrics after data has been loaded -->
       <div v-else class="metrics">
@@ -35,6 +40,7 @@
           activeAgents: 0
         },
         loading: true, // Add loading state
+        error: false,
       }
     },
     computed: {
@@ -50,25 +56,29 @@
     methods: {
       async fetchMetrics() {
         try {
-          const [ordersResponse, agentsResponse] = await Promise.all([
+            const [ordersResponse, agentsResponse] = await Promise.all([
             api.get('/orders'),
             api.get('/agents')
-          ])
-  
-          const orders = ordersResponse.data
-          const agents = agentsResponse.data
-  
-          this.metrics = {
+            ])
+
+            console.log('Orders Response:', ordersResponse.data)
+            console.log('Agents Response:', agentsResponse.data)
+
+            const orders = ordersResponse.data
+            const agents = agentsResponse.data
+
+            this.metrics = {
             totalOrders: orders.length,
             allocatedOrders: orders.filter(o => o.status === 'allocated').length,
             pendingOrders: orders.filter(o => o.status === 'pending').length,
             activeAgents: agents.filter(a => a.check_in_time).length
-          }
-  
+            }
+
         } catch (error) {
-          console.error('Error fetching metrics:', error)
+            console.error('Error fetching metrics:', error)
+            this.error = true
         } finally {
-          this.loading = false // Ensure loading is false after fetching is done
+            this.loading = false
         }
       },
       formatMetricTitle(key) {
@@ -124,6 +134,10 @@
     text-align: center;
     font-size: 1.5em;
     color: #333;
+  }
+  .error-message {
+  color: red;
+  text-align: center;
   }
   </style>
   
