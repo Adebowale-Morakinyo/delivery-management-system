@@ -4,6 +4,9 @@ import logging
 from app.routes.warehouse_routes import warehouse_resource
 from app.routes.agent_routes import agent_resource
 from app.routes.order_routes import order_resource
+from app.routes.allocation_routes import allocation_resource
+from app.routes.allocation_routes import metrics_resource
+
 from app.database import db
 from app.populate_db import populate_sample_data
 from app.models.warehouse import Warehouse
@@ -36,6 +39,16 @@ logger.info("Starting the application")
 app.add_route('/warehouses', warehouse_resource)
 app.add_route('/agents', agent_resource)
 app.add_route('/orders', order_resource)
+app.add_route('/allocate', allocation_resource)
+app.add_route('/metrics', metrics_resource)
+
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from app.services.allocation_service import allocate_orders
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(allocate_orders, 'cron', hour=8, minute=0)
+scheduler.start()
 
 """
 if __name__ == '__main__':
