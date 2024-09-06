@@ -3,8 +3,8 @@ import logging
 from app.routes.warehouse_routes import warehouse_resource
 from app.routes.agent_routes import agent_resource
 from app.routes.order_routes import order_resource
-from app.database import populate_sample_data
-from app.populate_db import db
+from app.database import db
+from app.populate_db import populate_sample_data
 from app.models.warehouse import Warehouse
 from app.models.agent import Agent
 from app.models.order import Order
