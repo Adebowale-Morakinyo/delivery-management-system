@@ -4,25 +4,25 @@
 
     <!-- Show loading state while data is being fetched -->
     <div v-if="loading" class="loading-message">
-      <i class="fas fa-spinner fa-spin loading-icon"></i>
+      <font-awesome-icon icon="spinner" spin class="loading-icon" />
       <p>Loading metrics...</p>
     </div>
 
     <!-- Show error message if there was an error fetching data -->
     <div v-if="error" class="error-message">
-      <i class="fas fa-exclamation-triangle"></i>
+      <font-awesome-icon icon="exclamation-triangle" />
       <p>Error loading metrics. Please try again later.</p>
     </div>
 
     <!-- Show metrics after data has been loaded -->
     <div v-else-if="!loading" class="metrics">
       <div class="metric" v-for="(value, key) in metrics" :key="key">
-        <i :class="getIcon(key)" class="metric-icon"></i>
+        <font-awesome-icon :icon="getIcon(key)" class="metric-icon" />
         <h3>{{ formatMetricTitle(key) }}</h3>
         <p>{{ value }}</p>
       </div>
       <div class="metric">
-        <i class="fas fa-users"></i>
+        <font-awesome-icon icon="users" />
         <h3>Average Orders per Agent</h3>
         <p>{{ averageOrdersPerAgent }}</p>
       </div>
@@ -70,12 +70,12 @@ export default {
     },
     getIcon(key) {
       const icons = {
-        totalOrders: "fas fa-box",
-        allocatedOrders: "fas fa-check-circle",
-        pendingOrders: "fas fa-clock",
-        activeAgents: "fas fa-user-check"
+        totalOrders: "box",
+        allocatedOrders: "check-circle",
+        pendingOrders: "clock",
+        activeAgents: "user-check"
       };
-      return icons[key] || "fas fa-info-circle"; // Default icon
+      return icons[key] || "info-circle"; // Default icon
     }
   }
 }
