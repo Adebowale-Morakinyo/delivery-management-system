@@ -32,6 +32,7 @@
 
 <script>
 // import { faSpinner, faExclamationTriangle, faBox, faCheckCircle, faClock, faUserCheck, faUsers, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import api from '../api/config'
 
 export default {
   name: 'MetricsDashboard',
