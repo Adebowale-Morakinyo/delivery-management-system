@@ -2,6 +2,7 @@ import falcon
 import json
 import logging
 from app.models.warehouse import Warehouse
+from app.database import db
 
 # Create a logger instance
 logger = logging.getLogger(__name__)
@@ -11,15 +12,16 @@ class WarehouseResource:
     def on_get(self, req, resp):
         logger.info("Received GET request for warehouses")
         try:
-            warehouses = [
-                {
-                    'id': w.id,
-                    'name': w.name,
-                    'latitude': float(w.latitude),
-                    'longitude': float(w.longitude)
-                }
-                for w in Warehouse.select()
-            ]
+            with db.atomic():
+                warehouses = [
+                    {
+                        'id': w.id,
+                        'name': w.name,
+                        'latitude': float(w.latitude),
+                        'longitude': float(w.longitude)
+                    }
+                    for w in Warehouse.select()
+                ]
             resp.body = json.dumps(warehouses)
             resp.status = falcon.HTTP_200
             logger.info(f"Warehouses successfully fetched: {len(warehouses)} warehouses found")
@@ -32,11 +34,12 @@ class WarehouseResource:
         logger.info("Received POST request to create a warehouse")
         try:
             data = json.load(req.stream)
-            warehouse = Warehouse.create(
-                name=data['name'],
-                latitude=data['latitude'],
-                longitude=data['longitude']
-            )
+            with db.atomic():
+                warehouse = Warehouse.create(
+                    name=data['name'],
+                    latitude=data['latitude'],
+                    longitude=data['longitude']
+                )
             resp.body = json.dumps({
                 'id': warehouse.id,
                 'name': warehouse.name,
