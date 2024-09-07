@@ -4,7 +4,7 @@
 
     <!-- Show loading state while data is being fetched -->
     <div v-if="loading" class="loading-message">
-      <font-awesome-icon :icon="['fas', 'spinner']" />
+      <font-awesome-icon :icon="['fas', 'spinner']" spin />
       <p>Loading metrics...</p>
     </div>
 
