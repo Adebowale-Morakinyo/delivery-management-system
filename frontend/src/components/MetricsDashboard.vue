@@ -4,13 +4,13 @@
 
     <!-- Show loading state while data is being fetched -->
     <div v-if="loading" class="loading-message">
-      <font-awesome-icon :icon="['fas', 'spinner']" spin class="loading-icon" />
+      <font-awesome-icon :icon="['fas', 'spinner']" />
       <p>Loading metrics...</p>
     </div>
 
     <!-- Show error message if there was an error fetching data -->
     <div v-if="error" class="error-message">
-      <font-awesome-icon :icon="['fas', 'exclamation-triangle']" />
+      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
       <p>Error loading metrics. Please try again later.</p>
     </div>
 
@@ -72,11 +72,11 @@ export default {
     getIcon(key) {
       const icons = {
         totalOrders: ['fas', 'box'],
-        allocatedOrders: ['fas', 'check-circle'],
+        allocatedOrders: ['fas', 'circle-check'],
         pendingOrders: ['fas', 'clock'],
         activeAgents: ['fas', 'user-check']
       };
-      return icons[key] || ['fas', 'info-circle']; // Default icon
+      return icons[key] || ['fas', 'circle-info']; // Default icon
     }
   }
 }
