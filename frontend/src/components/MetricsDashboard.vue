@@ -4,21 +4,25 @@
 
     <!-- Show loading state while data is being fetched -->
     <div v-if="loading" class="loading-message">
+      <i class="fas fa-spinner fa-spin loading-icon"></i>
       <p>Loading metrics...</p>
     </div>
 
     <!-- Show error message if there was an error fetching data -->
     <div v-if="error" class="error-message">
+      <i class="fas fa-exclamation-triangle"></i>
       <p>Error loading metrics. Please try again later.</p>
     </div>
 
     <!-- Show metrics after data has been loaded -->
     <div v-else-if="!loading" class="metrics">
       <div class="metric" v-for="(value, key) in metrics" :key="key">
+        <i :class="getIcon(key)" class="metric-icon"></i>
         <h3>{{ formatMetricTitle(key) }}</h3>
         <p>{{ value }}</p>
       </div>
       <div class="metric">
+        <i class="fas fa-users"></i>
         <h3>Average Orders per Agent</h3>
         <p>{{ averageOrdersPerAgent }}</p>
       </div>
@@ -63,6 +67,15 @@ export default {
     formatMetricTitle(key) {
       // Format the key string into a more human-readable title
       return key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')
+    },
+    getIcon(key) {
+      const icons = {
+        totalOrders: "fas fa-box",
+        allocatedOrders: "fas fa-check-circle",
+        pendingOrders: "fas fa-clock",
+        activeAgents: "fas fa-user-check"
+      };
+      return icons[key] || "fas fa-info-circle"; // Default icon
     }
   }
 }
@@ -115,9 +128,26 @@ export default {
   text-align: center;
   font-size: 1.5em;
   color: #333;
+  margin: 20px 0;
+}
+
+.loading-message .loading-icon {
+  font-size: 2em;
+  color: #007bff; /* Blue color for loading icon */
 }
 
 .error-message {
   color: red;
+}
+
+.error-message .fa-exclamation-triangle {
+  font-size: 2em; /* Size for error icon */
+  margin-bottom: 10px; /* Space between icon and text */
+}
+
+.metric-icon {
+  font-size: 2em;
+  color: #007bff; /* Blue color for icons */
+  margin-bottom: 10px; /* Space between icon and text */
 }
 </style>
