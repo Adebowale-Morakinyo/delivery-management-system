@@ -13,3 +13,10 @@ class Agent(BaseModel):
 
     class Meta:
         table_name = 'agents'
+
+    # Comparison method for Agent instances
+    def __lt__(self, other):
+        # Compare based on total_distance first, then total_time
+        if self.total_distance == other.total_distance:
+            return self.total_time < other.total_time
+        return self.total_distance < other.total_distance
