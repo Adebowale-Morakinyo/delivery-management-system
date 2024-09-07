@@ -4,25 +4,25 @@
 
     <!-- Show loading state while data is being fetched -->
     <div v-if="loading" class="loading-message">
-      <font-awesome-icon :icon="['fas', 'spinner']" spin />
+      <font-awesome-icon :icon="['fas', 'spinner']" spin class="loading-icon themed-icon" />
       <p>Loading metrics...</p>
     </div>
 
     <!-- Show error message if there was an error fetching data -->
     <div v-if="error" class="error-message">
-      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
+      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" class="error-icon themed-icon" />
       <p>Error loading metrics. Please try again later.</p>
     </div>
 
     <!-- Show metrics after data has been loaded -->
     <div v-else-if="!loading" class="metrics">
       <div class="metric" v-for="(value, key) in metrics" :key="key">
-        <font-awesome-icon :icon="getIcon(key)" class="metric-icon" />
+        <font-awesome-icon :icon="getIcon(key)" class="metric-icon themed-icon" />
         <h3>{{ formatMetricTitle(key) }}</h3>
         <p>{{ value }}</p>
       </div>
       <div class="metric">
-        <font-awesome-icon :icon="['fas', 'users']" />
+        <font-awesome-icon :icon="['fas', 'users']" class="themed-icon" />
         <h3>Average Orders per Agent</h3>
         <p>{{ averageOrdersPerAgent }}</p>
       </div>
@@ -124,6 +124,12 @@ export default {
   color: #007bff;
 }
 
+/* Apply blue theme to icons */
+.themed-icon {
+  font-size: 2.5em; /* Adjust size */
+  color: #007bff;   /* Blue theme color */
+}
+
 .loading-message,
 .error-message {
   text-align: center;
@@ -131,7 +137,8 @@ export default {
   color: #333;
 }
 
-.error-message {
+/* Specific color for error icons */
+.error-message .themed-icon {
   color: red;
 }
 </style>
