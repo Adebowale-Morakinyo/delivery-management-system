@@ -45,13 +45,7 @@ app.add_route('/metrics', metrics_resource)
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.services.allocation_service import allocate_orders
 
-
-def keep_alive():
-    logger.info("I am alive")
-
-
 scheduler = BackgroundScheduler()
-scheduler.add_job(keep_alive, 'interval', minutes=5)
 scheduler.add_job(allocate_orders, 'cron', hour=8, minute=0)
 scheduler.start()
 
