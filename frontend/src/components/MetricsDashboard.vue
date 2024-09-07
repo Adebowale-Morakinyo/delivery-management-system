@@ -81,3 +81,46 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.metrics-dashboard {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background: linear-gradient(135deg, #f7f8f9, #e1e4e8);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.metric {
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+  text-align: center;
+}
+
+.metric:hover {
+  transform: translateY(-5px);
+}
+
+.metric h3 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.2em;
+}
+
+.metric p {
+  font-size: 2em;
+  font-weight: bold;
+  margin-bottom: 0;
+  color: #007bff;
+}
+</style>
