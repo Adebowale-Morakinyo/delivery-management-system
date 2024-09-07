@@ -51,7 +51,7 @@ def keep_alive():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(keep_alive, 'interval', minute=5)
+scheduler.add_job(keep_alive, 'interval', minutes=5)
 scheduler.add_job(allocate_orders, 'cron', hour=8, minute=0)
 scheduler.start()
 
