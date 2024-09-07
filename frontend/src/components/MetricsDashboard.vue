@@ -123,4 +123,15 @@ export default {
   margin-bottom: 0;
   color: #007bff;
 }
+
+.loading-message,
+.error-message {
+  text-align: center;
+  font-size: 1.5em;
+  color: #333;
+}
+
+.error-message {
+  color: red;
+}
 </style>
