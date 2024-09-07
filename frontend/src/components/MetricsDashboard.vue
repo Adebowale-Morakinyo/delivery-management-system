@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { faSpinner, faExclamationTriangle, faBox, faCheckCircle, faClock, faUserCheck, faUsers, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+// import { faSpinner, faExclamationTriangle, faBox, faCheckCircle, faClock, faUserCheck, faUsers, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 export default {
   name: 'MetricsDashboard',
