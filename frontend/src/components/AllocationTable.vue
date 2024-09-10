@@ -1,3 +1,4 @@
+vue
 <template>
   <div class="allocation-table">
     <h2>Order Allocation Details</h2>
@@ -72,6 +73,15 @@ export default {
 </script>
 
 <style scoped>
+.allocation-table {
+  max-width: 900px; /* Match the max-width of MetricsDashboard */
+  margin: 20px auto; /* Center the component with margin */
+  padding: 20px; /* Add padding for better spacing */
+  background: linear-gradient(135deg, #f7f8f9, #e1e4e8); /* Add a background similar to MetricsDashboard */
+  border-radius: 10px; /* Match border radius */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+}
+
 .table-container {
   overflow-x: auto;
 }
