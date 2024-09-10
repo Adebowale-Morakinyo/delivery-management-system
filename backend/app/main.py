@@ -5,6 +5,7 @@ from app.routes.warehouse_routes import warehouse_resource
 from app.routes.agent_routes import agent_resource
 from app.routes.order_routes import order_resource
 from app.routes.allocation_routes import allocation_resource
+from app.routes.allocation_details_routes import allocation_details_resource
 from app.routes.metrics_routes import metrics_resource
 
 from app.database import db
@@ -41,13 +42,17 @@ app.add_route('/agents', agent_resource)
 app.add_route('/orders', order_resource)
 app.add_route('/allocate', allocation_resource)
 app.add_route('/metrics', metrics_resource)
+app.add_route('/allocation-details', allocation_details_resource)
 
+"""
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.services.allocation_service import allocate_orders
+
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(allocate_orders, 'cron', hour=8, minute=0)
 scheduler.start()
+"""
 
 """
 if __name__ == '__main__':
