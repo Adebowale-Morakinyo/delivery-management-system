@@ -1,21 +1,24 @@
-vue
 <template>
   <div id="app">
     <h1 class="app-heading">Delivery Management System</h1>
     <metrics-dashboard />
+    <allocation-table />
   </div>
 </template>
 
 <script>
 import MetricsDashboard from './components/MetricsDashboard.vue'
+import AllocationTable from './components/AllocationTable.vue'
 
 export default {
   name: 'App',
   components: {
-    MetricsDashboard
+    MetricsDashboard,
+    AllocationTable
   }
 }
 </script>
+
 
 <style scoped>
 .app-heading {
