@@ -7,8 +7,6 @@ from datetime import date, timedelta
 import math
 from decimal import Decimal
 import heapq
-from sklearn.cluster import KMeans
-import numpy as np
 
 # Create a logger instance
 logger = logging.getLogger(__name__)
@@ -28,17 +26,28 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 
 def cluster_orders(orders, num_agents):
-    logger.info(f"Clustering {len(orders)} orders for {num_agents} agents")
-    coordinates = np.array([(order.latitude, order.longitude) for order in orders])
-    kmeans = KMeans(n_clusters=num_agents)
-    kmeans.fit(coordinates)
+    logger.info(f"Clustering {len(orders)} orders for {num_agents} agents using custom clustering")
+
+    # Define the geographical bounds
+    min_lat = min(order.latitude for order in orders)
+    max_lat = max(order.latitude for order in orders)
+    min_lon = min(order.longitude for order in orders)
+    max_lon = max(order.longitude for order in orders)
+
+    # Calculate grid size
+    lat_step = (max_lat - min_lat) / num_agents if num_agents > 0 else 0
+    lon_step = (max_lon - min_lon) / num_agents if num_agents > 0 else 0
 
     clusters = [[] for _ in range(num_agents)]
-    for idx, order in enumerate(orders):
-        cluster_id = kmeans.labels_[idx]
-        clusters[cluster_id].append(order)
 
-    logger.info(f"Orders clustered into {len(clusters)} groups")
+    for order in orders:
+        # Determine cluster index based on position
+        lat_idx = int((order.latitude - min_lat) / lat_step) if lat_step > 0 else 0
+        lon_idx = int((order.longitude - min_lon) / lon_step) if lon_step > 0 else 0
+        cluster_idx = (lat_idx + lon_idx) % num_agents  # Simple way to distribute
+        clusters[cluster_idx].append(order)
+
+    logger.info(f"Orders clustered into {len(clusters)} groups using custom clustering")
     return clusters
 
 
