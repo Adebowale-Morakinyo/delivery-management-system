@@ -33,6 +33,7 @@ class AgentResource:
             resp.status = falcon.HTTP_500
 
     def on_post(self, req, resp):
+        logger.info("Received POST request to create an agent")
         try:
             data = json.load(req.stream)
             with db.atomic():
@@ -53,4 +54,24 @@ class AgentResource:
             resp.status = falcon.HTTP_500
 
 
+class AgentCheckInResource:
+    def on_post(self, req, resp):
+        # Agent check-in
+        logger.info("Received POST request for agent check-in")
+        try:
+            data = json.load(req.stream)
+            agent_id = data['agent_id']
+            with db.atomic():
+                agent = Agent.get_by_id(agent_id)
+                agent.check_in_time = datetime.now()
+                agent.save()
+            resp.body = json.dumps({'message': 'Agent checked in successfully'})
+            resp.status = falcon.HTTP_200
+            logger.info(f"Agent {agent_id} checked in")
+        except Exception as e:
+            logger.error(f"Error during agent check-in: {e}")
+            resp.status = falcon.HTTP_500
+
+
 agent_resource = AgentResource()
+agent_checkin_resource = AgentCheckInResource()
