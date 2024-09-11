@@ -31,8 +31,8 @@ vue
           <tr v-for="allocation in allocations" :key="allocation.orderId">
             <td>{{ allocation.agentName }}</td>
             <td>{{ allocation.orderId }}</td>
-            <td>{{ allocation.estimatedDistance.toFixed(2) }}</td>
-            <td>{{ allocation.estimatedTime.toFixed(2) }}</td>
+            <td>{{ allocation.estimatedDistance ? allocation.estimatedDistance.toFixed(2) : 'N/A' }}</td>
+            <td>{{ allocation.estimatedTime ? allocation.estimatedTime.toFixed(2) : 'N/A' }}</td>
             <td>{{ allocation.allocationTimestamp }}</td>
           </tr>
         </tbody>
