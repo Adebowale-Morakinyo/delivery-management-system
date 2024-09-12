@@ -13,6 +13,7 @@ class Order(BaseModel):
     agent = ForeignKeyField(Agent, backref='orders', null=True)
     allocated_date = DateField(null=True)
     completed_time = DateTimeField(null=True)
+    estimated_time = DecimalField(max_digits=10, decimal_places=2, null=True)  # Add this line
 
     class Meta:
         table_name = 'orders'
