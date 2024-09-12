@@ -4,139 +4,115 @@ from app.models.order import Order
 from app.models.warehouse import Warehouse
 from app.database import db
 from datetime import date, timedelta
-import math
 from decimal import Decimal
-from app.data_structures.min_heap import MinHeapNode, MinHeap
+import math
+from collections import defaultdict
 
-# Create a logger instance
 logger = logging.getLogger(__name__)
 
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     R = 6371  # Earth's radius in kilometers
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-
     a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
     c = 2 * math.asin(math.sqrt(a))
-
     return R * c
-
-
-def cluster_orders(orders, num_agents):
-    logger.info(f"Clustering {len(orders)} orders for {num_agents} agents using custom clustering")
-
-    # Define the geographical bounds
-    min_lat = min(order.latitude for order in orders)
-    max_lat = max(order.latitude for order in orders)
-    min_lon = min(order.longitude for order in orders)
-    max_lon = max(order.longitude for order in orders)
-
-    # Calculate grid size
-    lat_step = (max_lat - min_lat) / num_agents if num_agents > 0 else 0
-    lon_step = (max_lon - min_lon) / num_agents if num_agents > 0 else 0
-
-    clusters = [[] for _ in range(num_agents)]
-
-    for order in orders:
-        # Determine cluster index based on position
-        lat_idx = int((order.latitude - min_lat) / lat_step) if lat_step > 0 else 0
-        lon_idx = int((order.longitude - min_lon) / lon_step) if lon_step > 0 else 0
-        cluster_idx = (lat_idx + lon_idx) % num_agents  # Simple way to distribute
-        clusters[cluster_idx].append(order)
-
-    logger.info(f"Orders clustered into {len(clusters)} groups using custom clustering")
-    return clusters
 
 
 def allocate_orders():
     today = date.today()
     logger.info("Starting order allocation process")
+
     with db.atomic():
-        warehouses = Warehouse.select()
+        # Fetch all warehouses, agents, and orders in bulk
+        warehouses = list(Warehouse.select())
+        agents = list(Agent.select().where(Agent.check_in_time.is_null(False)))
+        orders = list(Order.select().where(Order.status == 'pending'))
 
+        # Group agents and orders by warehouse
+        agents_by_warehouse = defaultdict(list)
+        orders_by_warehouse = defaultdict(list)
+
+        for agent in agents:
+            agents_by_warehouse[agent.warehouse_id].append(agent)
+
+        for order in orders:
+            orders_by_warehouse[order.warehouse_id].append(order)
+
+        # Process each warehouse
         for warehouse in warehouses:
+            warehouse_agents = agents_by_warehouse.get(warehouse.id, [])
+            warehouse_orders = orders_by_warehouse.get(warehouse.id, [])
+
             logger.info(f"Processing warehouse: {warehouse.id} - {warehouse.name}")
+            logger.info(f"Found {len(warehouse_agents)} available agents and {len(warehouse_orders)} pending orders")
 
-            agents = list(Agent.select().where(
-                Agent.warehouse == warehouse,
-                Agent.check_in_time.is_null(False)
-            ))
-            orders = list(Order.select().where(
-                Order.warehouse == warehouse,
-                Order.status == 'pending'
-            ))
-
-            logger.info(f"Found {len(agents)} available agents and {len(orders)} pending orders")
-
-            if not agents or not orders:
+            if not warehouse_agents or not warehouse_orders:
                 continue
 
-            # Cluster orders using custom clustering
-            order_clusters = cluster_orders(orders, len(agents))
+            # Initialize agent metrics
+            agent_metrics = {
+                agent.id: {'agent': agent, 'total_distance': Decimal(0), 'total_time': Decimal(0), 'orders': []} for
+                agent in warehouse_agents}
 
-            # Initialize custom MinHeap for agents
-            agent_heap = MinHeap()
-            for agent in agents:
-                agent_heap.insert(MinHeapNode(Decimal(0), Decimal(0), agent))
+            # Sort orders by distance from warehouse (optional, can be removed for further optimization)
+            warehouse_orders.sort(key=lambda order: haversine_distance(
+                warehouse.latitude, warehouse.longitude, order.latitude, order.longitude
+            ))
 
-            for idx, cluster in enumerate(order_clusters):
-                cluster.sort(key=lambda o: haversine_distance(
-                    warehouse.latitude, warehouse.longitude, o.latitude, o.longitude
-                ))
+            # Allocate orders
+            for order in warehouse_orders:
+                best_agent = min(
+                    agent_metrics.values(),
+                    key=lambda x: (x['total_distance'], x['total_time'])
+                )
 
-                # Get the agent for this cluster
-                agent_node = agent_heap.extract_min()
-                agent = agent_node.agent
-                total_distance = agent_node.total_distance
-                total_time = agent_node.total_time
-
-                for order in cluster:
+                # Calculate distance and time for this order
+                if best_agent['orders']:
+                    last_order = best_agent['orders'][-1]
+                    distance = Decimal(haversine_distance(
+                        last_order.latitude, last_order.longitude, order.latitude, order.longitude
+                    ))
+                else:
                     distance = Decimal(haversine_distance(
                         warehouse.latitude, warehouse.longitude, order.latitude, order.longitude
-                    )) if agent.total_orders == 0 else Decimal(haversine_distance(
-                        agent.last_order_latitude, agent.last_order_longitude, order.latitude, order.longitude
                     ))
-                    time = Decimal(distance * 5 / 60)
+                time = Decimal(distance * 5 / 60)  # Assumed time based on distance
 
-                    if total_distance + distance <= Decimal(100) and total_time + time <= Decimal(10):
-                        logger.info(f"Allocating order {order.id} to agent {agent.id}")
+                # Check if agent can take this order
+                if best_agent['total_distance'] + distance <= Decimal(100) and best_agent[
+                    'total_time'] + time <= Decimal(10):
+                    logger.info(f"Allocating order {order.id} to agent {best_agent['agent'].id}")
 
-                        # Assign the order to the agent
-                        order.agent = agent
-                        order.status = 'allocated'
-                        order.allocated_date = today
-                        order.save()
+                    # Update order
+                    order.agent = best_agent['agent']
+                    order.status = 'allocated'
+                    order.allocated_date = today
+                    order.estimated_time = time
+                    order.save()
 
-                        # Update agent metrics
-                        agent.total_orders += 1
-                        total_distance += distance
-                        total_time += time
-                        agent.total_distance += distance
-                        agent.total_time += time
+                    # Update agent metrics
+                    best_agent['total_distance'] += distance
+                    best_agent['total_time'] += time
+                    best_agent['orders'].append(order)
+                else:
+                    logger.warning(f"Could not allocate order {order.id}")
+                    order.allocated_date = today + timedelta(days=1)
+                    order.save()
 
-                        # Store last order location for agent
-                        agent.last_order_latitude = order.latitude
-                        agent.last_order_longitude = order.longitude
-                        agent.save()
-                    else:
-                        logger.warning(f"Agent {agent.id} reached max capacity for distance/time")
-                        break  # Move to next agent
-
-                # Re-insert the agent into the heap
-                agent_heap.insert(MinHeapNode(total_distance, total_time, agent))
-
-            # Postpone unallocated orders
-            unallocated_orders = Order.select().where(
-                Order.warehouse == warehouse,
-                Order.status == 'pending'
-            )
-            for order in unallocated_orders:
-                logger.info(f"Postponing unallocated order {order.id} to next day")
-                order.allocated_date = today + timedelta(days=1)
-                order.save()
+            # Update agents with their final metrics
+            for metrics in agent_metrics.values():
+                agent = metrics['agent']
+                agent.total_orders = len(metrics['orders'])
+                agent.total_distance = metrics['total_distance']
+                agent.total_time = metrics['total_time']
+                if metrics['orders']:
+                    last_order = metrics['orders'][-1]
+                    agent.last_order_latitude = last_order.latitude
+                    agent.last_order_longitude = last_order.longitude
+                agent.save()
 
     logger.info("Order allocation process completed")
 
@@ -151,10 +127,9 @@ def calculate_payment(agent):
         return 500
 
 
-# Run allocation at a specific time
 def run_allocation():
     from datetime import datetime
     now = datetime.now()
     if now.hour == 8 and now.minute == 0:
-        logger.info("Running order allocation at 8 AM")
+        logger.info("Running highly optimized order allocation at 8 AM")
         allocate_orders()
