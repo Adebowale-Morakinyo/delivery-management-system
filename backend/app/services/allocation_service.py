@@ -82,8 +82,7 @@ def allocate_orders():
                 time = Decimal(distance * 5 / 60)  # Assumed time based on distance
 
                 # Check if agent can take this order
-                if best_agent['total_distance'] + distance <= Decimal(100) and best_agent[
-                    'total_time'] + time <= Decimal(10):
+                if best_agent['total_distance'] + distance <= Decimal(100) and best_agent['total_time'] + time <= Decimal(10):
                     logger.info(f"Allocating order {order.id} to agent {best_agent['agent'].id}")
 
                     # Update order
