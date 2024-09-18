@@ -67,8 +67,14 @@ def allocate_orders():
 
             # Allocate orders
             for order in warehouse_orders:
-                # Extract the best agent from the heap (with the least total_distance and total_time)
+                # Extract the best agent from the heap
                 best_agent_node = agent_heap.extract_min()
+
+                # Check if the heap returned a valid node
+                if best_agent_node is None:
+                    logger.error("Heap is empty, no agents available for allocation.")
+                    break
+
                 best_agent = best_agent_node.agent
                 total_distance = best_agent_node.total_distance
                 total_time = best_agent_node.total_time
