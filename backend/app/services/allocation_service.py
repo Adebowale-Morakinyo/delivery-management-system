@@ -3,7 +3,6 @@ from app.models.agent import Agent
 from app.models.order import Order
 from app.models.warehouse import Warehouse
 from app.database import db
-from app.data_structures.min_heap import MinHeap, MinHeapNode  # Import the custom MinHeap class
 from datetime import date, timedelta
 from decimal import Decimal
 import math
@@ -53,35 +52,26 @@ def allocate_orders():
             if not warehouse_agents or not warehouse_orders:
                 continue
 
-            # Initialize MinHeap for agents
-            agent_heap = MinHeap()
+            # Initialize agent metrics
+            agent_metrics = {
+                agent.id: {'agent': agent, 'total_distance': Decimal(0), 'total_time': Decimal(0), 'orders': []} for
+                agent in warehouse_agents}
 
-            # Insert agents into the MinHeap with initial values
-            for agent in warehouse_agents:
-                agent_heap.insert(MinHeapNode(Decimal(0), Decimal(0), agent, last_order=None))
-
-            # Sort orders by distance from the warehouse (optional)
+            # Sort orders by distance from warehouse (optional, can be removed for further optimization)
             warehouse_orders.sort(key=lambda order: haversine_distance(
                 warehouse.latitude, warehouse.longitude, order.latitude, order.longitude
             ))
 
             # Allocate orders
             for order in warehouse_orders:
-                # Extract the best agent from the heap
-                best_agent_node = agent_heap.extract_min()
-
-                # Check if the heap returned a valid node
-                if best_agent_node is None:
-                    logger.error("Heap is empty, no agents available for allocation.")
-                    break
-
-                best_agent = best_agent_node.agent
-                total_distance = best_agent_node.total_distance
-                total_time = best_agent_node.total_time
+                best_agent = min(
+                    agent_metrics.values(),
+                    key=lambda x: (x['total_distance'], x['total_time'])
+                )
 
                 # Calculate distance and time for this order
-                if best_agent_node.last_order:
-                    last_order = best_agent_node.last_order
+                if best_agent['orders']:
+                    last_order = best_agent['orders'][-1]
                     distance = Decimal(haversine_distance(
                         last_order.latitude, last_order.longitude, order.latitude, order.longitude
                     ))
@@ -89,40 +79,38 @@ def allocate_orders():
                     distance = Decimal(haversine_distance(
                         warehouse.latitude, warehouse.longitude, order.latitude, order.longitude
                     ))
-
                 time = Decimal(distance * 5 / 60)  # Assumed time based on distance
 
                 # Check if agent can take this order
-                if total_distance + distance <= Decimal(100) and total_time + time <= Decimal(10):
-                    logger.info(f"Allocating order {order.id} to agent {best_agent.id}")
+                if best_agent['total_distance'] + distance <= Decimal(100) and best_agent['total_time'] + time <= Decimal(10):
+                    logger.info(f"Allocating order {order.id} to agent {best_agent['agent'].id}")
 
                     # Update order
-                    order.agent = best_agent
+                    order.agent = best_agent['agent']
                     order.status = 'allocated'
                     order.allocated_date = today
                     order.estimated_time = time
                     order.save()
 
                     # Update agent metrics
-                    total_distance += distance
-                    total_time += time
-
-                    # Re-insert the agent into the heap with updated metrics and last assigned order
-                    agent_heap.insert(MinHeapNode(total_distance, total_time, best_agent, last_order=order))
+                    best_agent['total_distance'] += distance
+                    best_agent['total_time'] += time
+                    best_agent['orders'].append(order)
                 else:
                     logger.warning(f"Could not allocate order {order.id}")
                     order.allocated_date = today + timedelta(days=1)
                     order.save()
 
-            # Update agents' final metrics
-            for metrics in agent_heap.heap:
-                agent = metrics.agent
-                agent.total_orders = len([metrics.last_order])  # If orders were assigned
-                agent.total_distance = metrics.total_distance
-                agent.total_time = metrics.total_time
-                if metrics.last_order:
-                    agent.last_order_latitude = metrics.last_order.latitude
-                    agent.last_order_longitude = metrics.last_order.longitude
+            # Update agents with their final metrics
+            for metrics in agent_metrics.values():
+                agent = metrics['agent']
+                agent.total_orders = len(metrics['orders'])
+                agent.total_distance = metrics['total_distance']
+                agent.total_time = metrics['total_time']
+                if metrics['orders']:
+                    last_order = metrics['orders'][-1]
+                    agent.last_order_latitude = last_order.latitude
+                    agent.last_order_longitude = last_order.longitude
                 agent.save()
 
     logger.info("Order allocation process completed")
@@ -144,3 +132,4 @@ def run_allocation():
     if now.hour == 8 and now.minute == 0:
         logger.info("Running highly optimized order allocation at 8 AM")
         allocate_orders()
+        
